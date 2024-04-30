@@ -1,6 +1,9 @@
 local wezterm = require("wezterm")
 local action = wezterm.action
 
+local home_dir = os.getenv("HOME")
+local wallpaper_dir = home_dir .. "/Pictures/Wallpapers/"
+
 local config = {}
 -- Use config_builder object if possible
 if wezterm.config_builder then
@@ -23,9 +26,26 @@ config.inactive_pane_hsb = {
 	saturation = 0.3,
 	brightness = 0.3,
 }
+-- wallpaper setting
+local dimmer = { brightness = 0.1 }
+config.enable_scroll_bar = true
+config.min_scroll_bar_height = "2cell"
+config.colors = {
+	scrollbar_thumb = "grey",
+}
+config.background = {
+	{
+		source = {
+			File = wallpaper_dir .. "win11_flower.png",
+		},
+		repeat_x = "Mirror",
+		hsb = dimmer,
+		attachment = { Parallax = 0.1 },
+	},
+}
 
 -- Key bindings
-config.leader = { key = "t", mods = "CTRL", timeout_milliseconds = 1000 }
+config.leader = { key = "a", mods = "CTRL", timeout_milliseconds = 1000 }
 config.keys = {
 	{ key = "t", mods = "LEADER", action = action.SendKey({ key = "t", mods = "CTRL" }) },
 	{ key = "c", mods = "LEADER", action = action.ActivateCopyMode },
