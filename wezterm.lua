@@ -40,14 +40,15 @@ config.background = {
 		},
 		repeat_x = "Mirror",
 		hsb = dimmer,
-		attachment = { Parallax = 0.1 },
+		-- attachment = { Parallax = 0.1 },
+		attachment = "Fixed",
 	},
 }
 
 -- Key bindings
 config.leader = { key = "a", mods = "CTRL", timeout_milliseconds = 1000 }
 config.keys = {
-	{ key = "t", mods = "LEADER", action = action.SendKey({ key = "t", mods = "CTRL" }) },
+	{ key = "a", mods = "LEADER", action = action.SendKey({ key = "a", mods = "CTRL" }) },
 	{ key = "c", mods = "LEADER", action = action.ActivateCopyMode },
 
 	-- Panes
@@ -76,6 +77,9 @@ config.keys = {
 
 	-- Workspaces
 	{ key = "w", mods = "LEADER", action = action.ShowLauncherArgs({ flags = "FUZZY|WORKSPACES" }) },
+
+	-- switching panes easily
+	{ key = "p", mods = "LEADER", action = action.PaneSelect },
 }
 
 for i = 1, 9 do
