@@ -1,14 +1,10 @@
 local wezterm = require "wezterm"
 local action = wezterm.action
-local mux = wezterm.mux
-
-wezterm.on("gui-startup", function()
-  local tab, pane, window = mux.spawn_window {}
-  window:gui_window():maximize()
-end)
 
 local home_dir = os.getenv "HOME"
 local wallpaper_dir = home_dir .. "/Pictures/Wallpapers/"
+
+-- wezterm.add_to_config_reload_watch_list(wallpaper_dir .. "wallpaper.png")
 
 local config = {}
 -- Use config_builder object if possible
@@ -21,9 +17,9 @@ config.default_prog = { "/bin/zsh", "-l" }
 config.color_scheme = "Aardvark Blue"
 local scheme = wezterm.color.get_builtin_schemes()["Aardvark Blue"]
 config.font = wezterm.font_with_fallback {
+  { family = "Cascadia Code", scale = 1 },
+  { family = "MartianMono Nerd Font Propo", scale = 1 },
   { family = "0xProto Nerd Font", scale = 1 },
-  { family = "VictorMono Nerd Font", scale = 1 },
-  { family = "FantasqueSansMono Nerd Font", scale = 1 },
 }
 config.font_size = 12
 config.line_height = 1.2
@@ -31,8 +27,8 @@ config.window_decorations = "RESIZE"
 config.scrollback_lines = 5000
 config.default_workspace = "home"
 config.inactive_pane_hsb = {
-  saturation = 0.8,
-  brightness = 0.7,
+  saturation = 0.7,
+  brightness = 0.6,
 }
 config.window_padding = {
   left = "1cell",
@@ -41,7 +37,7 @@ config.window_padding = {
   bottom = 0,
 }
 -- wallpaper setting
-local dimmer = { brightness = 0.1 }
+local dimmer = { brightness = 0.05 }
 config.enable_scroll_bar = true
 config.min_scroll_bar_height = "2cell"
 config.colors = {
@@ -54,11 +50,45 @@ config.background = {
       File = wallpaper_dir .. "wallpaper.png",
     },
     repeat_x = "Mirror",
+    vertical_align = "Middle",
+    horizontal_align = "Center",
     hsb = dimmer,
     -- attachment = { Parallax = 0.1 },
     attachment = "Fixed",
   },
 }
+
+-- Docs and my own functions
+wezterm.on("filter-last-command-output", function(window, pane)
+  -- Retrieve current semantic zone
+  local out_zone = pane:get_semantic_zones()
+  -- Retrieve the current pane's text
+  local text = pane:get_text_from_semantic_zone(out_zone["Output"])
+
+  -- Create a temporary file to pass to the pager
+  local name = os.tmpname()
+  local f = io.open(name, "w+")
+  f:write(text)
+  f:flush()
+  f:close()
+
+  -- Open a new window running less and tell it to open the file
+  window:perform_action(
+    action.SpawnCommandInNewWindow {
+      args = { "fzf", "<", name },
+    },
+    pane
+  )
+
+  -- Wait "enough" time for less to read the file before we remove it.
+  -- The window creation and process spawn are asynchronous wrt. running
+  -- this script and are not awaitable, so we just pick a number.
+  --
+  -- Note: We don't strictly need to remove this file, but it is nice
+  -- to avoid cluttering up the temporary directory.
+  wezterm.sleep_ms(1000)
+  os.remove(name)
+end)
 
 -- Key bindings
 config.leader = { key = "a", mods = "CTRL", timeout_milliseconds = 1000 }
@@ -95,6 +125,9 @@ config.keys = {
 
   -- switching panes easily
   { key = "p", mods = "LEADER", action = action.PaneSelect },
+
+  -- Docs and my own functions keybindings if necessary
+  { key = "E", mods = "CTRL", action = action.EmitEvent "filter-last-command-outputy" },
 }
 
 for i = 1, 9 do
@@ -232,5 +265,13 @@ wezterm.on("update-right-status", function(window, pane)
     { Text = wezterm.nerdfonts.md_clock .. "  " .. time },
   })
 end)
+
+config.mouse_bindings = {
+  {
+    event = { Down = { streak = 3, button = "Left" } },
+    action = wezterm.action.SelectTextAtMouseCursor "SemanticZone",
+    mods = "NONE",
+  },
+}
 
 return config
